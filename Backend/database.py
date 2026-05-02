@@ -1,5 +1,12 @@
 import sqlite3
 import csv
+import sys
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 con = sqlite3.connect("HeyDude.db")
 cursor = con.cursor()

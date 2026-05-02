@@ -9,8 +9,9 @@ import time
 def listen_for_hotword(eel_instance):
     """Continuously listen for 'Hey Dude' wake word"""
     recognizer = sr.Recognizer()
-    recognizer.energy_threshold = 4000  # Adjust for sensitivity
+    recognizer.energy_threshold = 300  # library default — auto-adapts via dynamic
     recognizer.dynamic_energy_threshold = True
+    recognizer.pause_threshold = 0.5
     
     print("="*50)
     print("🎤 Hotword Detection Active - Waiting for 'Hey Dude'")

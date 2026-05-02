@@ -1,17 +1,15 @@
-// display speak message
+// Hey Dude — Settings, profile, commands and contacts management
 $(document).ready(function () {
-  // display speak message
-  eel.expose(DisplayMessage);
-  function DisplayMessage(message, type = "info") {
-    $(".siri-message li:first").text(message);
-    $(".siri-message").textillate("start");
+  // Legacy hooks still exposed for backward compatibility with backend
+  function DisplayMessage(message) {
+    $("#SiriMessage").text(message || "");
   }
-
-  // display hood
-  eel.expose(ShowHood);
   function ShowHood() {
-    $("#Oval").attr("hidden", false);
-    $("#Siriwave").attr("hidden", true);
+    $("#LiveBar").attr("hidden", true);
+  }
+  if (typeof eel !== "undefined" && eel.expose) {
+    eel.expose(DisplayMessage, "DisplayMessage");
+    eel.expose(ShowHood, "ShowHood");
   }
 
   // ===== PROFILE MANAGEMENT =====

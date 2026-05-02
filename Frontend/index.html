@@ -3,648 +3,471 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hey Dude</title>
+    <title>Hey Dude · Personal Intelligence</title>
 
-    <!-- Favicon - multiple formats for better compatibility -->
+    <link rel="icon" type="image/png" href="assets(%20images%20)/IMAGES/hey-dude-logo.png" />
+
+    <!-- Syne (display, geometric futurist) + Outfit (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="icon"
-      type="image/png"
-      href="assets(%20images%20)/IMAGES/hey-dude-logo.png"
-    />
-    <link
-      rel="shortcut icon"
-      type="image/png"
-      href="assets(%20images%20)/IMAGES/hey-dude-logo.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      href="assets(%20images%20)/IMAGES/hey-dude-logo.png"
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
     />
 
-    <!-- Bootstrap -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
       rel="stylesheet"
       integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
       crossorigin="anonymous"
     />
-
-    <!-- Bootstrap Icons -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
-    />
-
-    <!-- Particle js -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"
-      type="text/javascript"
-    ></script>
-
-    <!--Textillate -->
-    <!-- Use the local animate.css from the vendore package (path URL-encoded for spaces) -->
-    <link
-      rel="stylesheet"
-      href="assets(%20images%20)/vendore/texllate-20251016T072024Z-1-001/texllate/animate.css"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="style.css" />
   </head>
 
-  <body>
-    <div class="container">
-      <!-- Connection status indicator -->
-      <div
-        id="connectionStatus"
-        style="
-          position: fixed;
-          top: 8px;
-          right: 12px;
-          z-index: 9999;
-          padding: 6px 10px;
-          border-radius: 6px;
-          background: rgba(0, 0, 0, 0.4);
-          color: #fff;
-          font-size: 12px;
-        "
-      >
-        Connecting...
-      </div>
-
-      <section id="oval" class="mb-4">
-        <div class="row">
-          <div class="col-md-1"></div>
-          <div class="col-md-10 mt-4 pt-4">
-            <div class="main-container">
-              <!-- Canvas for particle effects -->
-              <canvas
-                id="canvasone"
-                width="700"
-                height="420"
-                style="position: absolute; z-index: 1"
-              ></canvas>
-
-              <!-- Main Orb Section -->
-              <div class="orb-section">
-                <div id="Hey Dude">
-                  <div class="square">
-                    <span class="circle"></span>
-                    <span class="circle"></span>
-                    <span class="circle"></span>
-                  </div>
-
-                  <h5 class="text-light text text-center glowing-text">
-                    Ask me anything
-                  </h5>
-                </div>
-              </div>
-
-              <!-- Gemini Response Display Area -->
-              <div id="geminiResponse" class="gemini-response-area" style="display: none;">
-                <div class="response-content" onclick="event.stopPropagation();">
-                  <div class="response-header">
-                    <i class="bi bi-stars"></i>
-                    <span>Gemini AI Response</span>
-                    <button class="close-response" onclick="closeGeminiResponse(); event.stopPropagation();">
-                      <i class="bi bi-x-lg"></i>
-                    </button>
-                  </div>
-                  <div class="response-text" id="geminiResponseText"></div>
-                </div>
-              </div>
-
-              <!-- Input Controls Section -->
-              <div class="controls-section">
-                <div
-                  id="TextInput"
-                  class="d-flex justify-content-center align-items-center"
-                >
-                  <input
-                    type="text"
-                    name="ChatBox"
-                    id="ChatBox"
-                    placeholder="Type your message here..."
-                    class="chat-input"
-                  />
-                  <button id="SendBtn" class="glow-on-hover control-btn" hidden>
-                    <i class="bi bi-send-fill"></i>
-                  </button>
-                  <button id="MicBtn" class="glow-on-hover control-btn">
-                    <i class="bi bi-mic"></i>
-                  </button>
-                  <button
-                    id="ChatBtn"
-                    class="glow-on-hover"
-                    data-bs-toggle="offcanvas"
-                    data-bs-target="#offcanvasscrolling"
-                    aria-control="offcanvascontrolling"
-                  >
-                    <i class="bi bi-chat-dots"></i>
-                  </button>
-                  <button 
-                    id="SettingBtn" 
-                    class="glow-on-hover control-btn"
-                    data-bs-toggle="modal"
-                    data-bs-target="#exampleModal"
-                  >
-                    <i class="bi bi-gear-fill"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-1"></div>
-        </div>
-      </section>
-
-      <!-- Search Bar Section -->
-      <section id="searchSection" class="mb-4">
-        <div class="row">
-          <div class="col-md-1"></div>
-          <div class="col-md-10">
-            <div class="search-container">
-              <div class="search-bar-wrapper">
-                <i class="bi bi-search search-icon"></i>
-                <input
-                  type="text"
-                  id="SearchBar"
-                  placeholder="Search or ask me anything..."
-                  class="search-bar"
-                />
-                <button id="SearchBtn" class="search-btn">
-                  <i class="bi bi-arrow-right-circle-fill"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-1"></div>
-        </div>
-      </section>
-
-      <section id="SiriWave" class="mb-4" hidden>
-        <div class="container-fluid">
-          <div class="row">
-            <div class="col-12">
-              <div
-                class="d-flex flex-column justify-content-center align-items-center"
-                style="height: 100vh"
-              >
-                <p class="text-center text-light mb-4 siri-message">
-                  Hello, I am your Dude..
-                </p>
-
-                <div
-                  id="siri-container"
-                  style="
-                    width: 800px;
-                    height: 200px;
-                    background: rgba(0, 30, 60, 0.2);
-                    border: 2px solid rgba(0, 150, 255, 0.3);
-                    border-radius: 20px;
-                  "
-                ></div>
-
-                <p
-                  class="text-center text-light mt-3"
-                  style="font-size: 14px; opacity: 0.7"
-                >
-                  Click anywhere to stop listening
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+  <body class="theme-jarvis">
+    <!-- ======================== ATMOSPHERE ======================== -->
+    <div class="ambient" aria-hidden="true">
+      <span class="ambient__core"></span>
+      <span class="ambient__core ambient__core--2"></span>
+      <span class="ambient__hex"></span>
+      <span class="ambient__noise"></span>
+      <span class="ambient__vignette"></span>
     </div>
 
-    <!-- Chat History Offcanvas (slides from left) -->
+    <!-- ======================== TOP ======================== -->
+    <header class="top">
+      <a class="brand" href="#">
+        <span class="brand__node" aria-hidden="true">
+          <svg viewBox="0 0 22 22" fill="none">
+            <polygon points="11,1 20,6 20,16 11,21 2,16 2,6" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="11" cy="11" r="3" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="brand__lock">
+          <span class="brand__name">HEY DUDE</span>
+          <span class="brand__class">PERSONAL INTELLIGENCE — V1</span>
+        </span>
+      </a>
+
+      <div class="top__cluster">
+        <span class="chip chip--time" id="TopTime">--:--</span>
+        <span id="connectionStatus" class="chip chip--status">
+          <span class="status-dot"></span>
+          <span class="status-text">linking</span>
+        </span>
+        <button class="ic-btn" id="ChatBtn" data-bs-toggle="offcanvas" data-bs-target="#offcanvasscrolling" title="History">
+          <i class="bi bi-clock-history"></i>
+        </button>
+        <button class="ic-btn" id="SettingBtn" data-bs-toggle="modal" data-bs-target="#exampleModal" title="Settings">
+          <i class="bi bi-sliders2"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- ======================== STAGE ======================== -->
+    <main class="stage">
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero__rule" aria-hidden="true"></div>
+        <p class="hero__kicker"><span class="hero__dot"></span><span id="HeroSub">SYSTEM READY · STANDING BY FOR YOUR COMMAND</span></p>
+        <h1 class="hero__title">
+          <span class="hero__line">good <em id="GreetTimeWord">evening</em>,</span>
+          <span class="hero__line hero__line--name" id="GreetName">friend</span>
+        </h1>
+        <div class="hero__rule hero__rule--end" aria-hidden="true"></div>
+      </section>
+
+      <!-- Arc Reactor — refined, cinematic, NOT busy -->
+      <section class="reactor-stage">
+        <!-- Atmospheric red bloom only behind reactor -->
+        <span class="reactor-bloom" aria-hidden="true"></span>
+        <span class="reactor-bloom reactor-bloom--2" aria-hidden="true"></span>
+
+        <div class="reactor" id="Orb" role="button" aria-label="Tap to talk">
+          <svg viewBox="0 0 380 380" class="reactor__svg">
+            <defs>
+              <radialGradient id="rxCore" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"  stop-color="#fff5f5" stop-opacity="1"/>
+                <stop offset="20%" stop-color="#ffd4d4" stop-opacity="0.9"/>
+                <stop offset="55%" stop-color="#ff2d4f" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="#5a0010" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="rxRing" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ff5566"/>
+                <stop offset="100%" stop-color="#ff2d4f"/>
+              </linearGradient>
+              <radialGradient id="rxAura" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ff2d4f" stop-opacity="0.35"/>
+                <stop offset="60%" stop-color="#ff2d4f" stop-opacity="0.05"/>
+                <stop offset="100%" stop-color="#ff2d4f" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+
+            <!-- Outer aura -->
+            <circle cx="190" cy="190" r="180" fill="url(#rxAura)"/>
+
+            <!-- Outer thin ring with broken arc segments -->
+            <circle class="rx-ring rx-ring--out" cx="190" cy="190" r="170" fill="none" stroke="url(#rxRing)" stroke-width="0.8" opacity="0.4"/>
+            <circle class="rx-ring rx-ring--out2" cx="190" cy="190" r="170" fill="none" stroke="#ff2d4f" stroke-width="1" stroke-dasharray="180 600" stroke-linecap="round" opacity="0.85"/>
+
+            <!-- Mid ring -->
+            <circle class="rx-ring rx-ring--mid" cx="190" cy="190" r="142" fill="none" stroke="rgba(240, 238, 229, 0.18)" stroke-width="0.6" stroke-dasharray="2 6"/>
+            <circle class="rx-ring rx-ring--mid2" cx="190" cy="190" r="142" fill="none" stroke="#00d9ff" stroke-width="0.8" stroke-dasharray="60 480" stroke-linecap="round" opacity="0.7"/>
+
+            <!-- Hex frame around core -->
+            <polygon class="rx-hex" points="190,75 290,135 290,245 190,305 90,245 90,135"
+                     fill="none" stroke="rgba(255, 45, 79, 0.4)" stroke-width="0.8"/>
+            <polygon class="rx-hex rx-hex--2" points="190,90 275,140 275,240 190,290 105,240 105,140"
+                     fill="none" stroke="rgba(255, 45, 79, 0.25)" stroke-width="0.6"/>
+
+            <!-- Hex tick marks at corners -->
+            <g class="rx-ticks" stroke="#ff2d4f" stroke-width="1.4" stroke-linecap="round" opacity="0.9">
+              <line x1="190" y1="58" x2="190" y2="72"/>
+              <line x1="320" y1="118" x2="304" y2="128"/>
+              <line x1="320" y1="262" x2="304" y2="252"/>
+              <line x1="190" y1="322" x2="190" y2="308"/>
+              <line x1="60"  y1="262" x2="76"  y2="252"/>
+              <line x1="60"  y1="118" x2="76"  y2="128"/>
+            </g>
+
+            <!-- Core orb -->
+            <circle class="rx-core-glow" cx="190" cy="190" r="92" fill="url(#rxCore)"/>
+            <circle class="rx-core-line" cx="190" cy="190" r="76" fill="none" stroke="#ff5566" stroke-width="1.2" opacity="0.85"/>
+            <circle class="rx-core-line rx-core-line--2" cx="190" cy="190" r="68" fill="none" stroke="rgba(255, 213, 213, 0.5)" stroke-width="0.5"/>
+
+            <!-- Crossbeam through core -->
+            <g class="rx-cross" stroke="rgba(255, 213, 213, 0.4)" stroke-width="0.6">
+              <line x1="190" y1="120" x2="190" y2="140"/>
+              <line x1="190" y1="240" x2="190" y2="260"/>
+              <line x1="120" y1="190" x2="140" y2="190"/>
+              <line x1="240" y1="190" x2="260" y2="190"/>
+            </g>
+
+            <!-- Listening waveform inside core -->
+            <g class="rx-wave">
+              <path d="M 140 190 Q 155 190 160 190 T 180 190 T 200 190 T 220 190 T 240 190" fill="none" stroke="#fff5f5" stroke-width="1.6" stroke-linecap="round"/>
+            </g>
+          </svg>
+
+          <!-- Audio bars — visible only when listening -->
+          <div class="rx-bars" id="OrbBars" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- Reactor caption -->
+        <p class="reactor-caption">
+          <span class="reactor-caption__bracket">⟨</span>
+          <span class="glowing-text" id="OrbCaption">tap the reactor or hit the mic</span>
+          <span class="reactor-caption__bracket">⟩</span>
+        </p>
+      </section>
+
+      <!-- Composer -->
+      <section class="composer-wrap">
+        <div class="composer" id="Composer">
+          <div class="composer__shell">
+            <span class="composer__sigil" aria-hidden="true">
+              <svg viewBox="0 0 14 14" fill="none">
+                <polygon points="7,1 13,4 13,10 7,13 1,10 1,4" stroke="currentColor" stroke-width="1"/>
+              </svg>
+            </span>
+            <input
+              id="ChatBox"
+              class="composer__input"
+              type="text"
+              placeholder="speak, or type your command…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <input id="SearchBar" type="hidden" />
+            <button id="SearchBtn" type="button" hidden aria-hidden="true"></button>
+
+            <!-- Live mic level meter (audio confirmation) -->
+            <span class="micmeter" id="MicMeter" aria-hidden="true">
+              <span class="micmeter__bar"></span>
+              <span class="micmeter__bar"></span>
+              <span class="micmeter__bar"></span>
+              <span class="micmeter__bar"></span>
+              <span class="micmeter__bar"></span>
+            </span>
+
+            <button id="MicBtn" class="mic-btn" title="Talk (Ctrl+Shift+J)">
+              <span class="mic-btn__halo" aria-hidden="true"></span>
+              <span class="mic-btn__halo mic-btn__halo--2" aria-hidden="true"></span>
+              <i class="bi bi-mic"></i>
+            </button>
+
+            <button id="SendBtn" class="send-btn" hidden title="Send">
+              <i class="bi bi-arrow-up-short"></i>
+            </button>
+          </div>
+
+          <!-- Status line under composer -->
+          <div class="composer__status">
+            <span class="composer__hint" id="ComposerHint">
+              <kbd>ctrl</kbd>+<kbd>shift</kbd>+<kbd>j</kbd> to talk · <kbd>esc</kbd> to close
+            </span>
+            <span class="composer__live" id="ComposerLive" hidden>
+              <span class="composer__live-dot"></span>
+              listening — speak as long as you need
+            </span>
+          </div>
+        </div>
+
+        <!-- Suggestion chips -->
+        <div class="suggestions" id="Suggestions">
+          <button class="sug" data-cmd="what's the weather like today">weather</button>
+          <button class="sug" data-cmd="play lofi on youtube">play lofi</button>
+          <button class="sug" data-cmd="open gmail">gmail</button>
+          <button class="sug" data-cmd="open whatsapp web">whatsapp</button>
+          <button class="sug" data-cmd="tell me something interesting">surprise me</button>
+          <button class="sug" data-cmd="what should i cook tonight">dinner ideas</button>
+        </div>
+      </section>
+
+      <!-- Live transcription bar -->
+      <div class="livebar" id="LiveBar" hidden>
+        <span class="livebar__rec">
+          <span class="livebar__pulse"></span>
+          REC
+        </span>
+        <div id="siri-container" class="livebar__wave"></div>
+        <p class="livebar__msg siri-message" id="SiriMessage">listening</p>
+        <button class="ghost-btn" id="StopListenBtn">
+          <i class="bi bi-stop-fill"></i> stop
+        </button>
+      </div>
+
+      <!-- Gemini response card -->
+      <div id="geminiResponse" class="response" hidden>
+        <header class="response__head">
+          <span class="response__sigil"><i class="bi bi-stars"></i></span>
+          <span class="response__title">Hey Dude responds</span>
+          <button class="ic-btn ic-btn--sm" onclick="closeGeminiResponse()" aria-label="Close">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </header>
+        <div class="response__body" id="geminiResponseText"></div>
+      </div>
+    </main>
+
+    <!-- ======================== BOTTOM BAR ======================== -->
+    <footer class="dock">
+      <div class="dock__cluster">
+        <span class="dock__label">SYSTEM</span>
+        <span class="dock__value">NOMINAL</span>
+      </div>
+      <div class="dock__cluster">
+        <span class="dock__label">VOICE</span>
+        <span class="dock__value" id="DockVoice">STANDBY</span>
+      </div>
+      <div class="dock__cluster">
+        <span class="dock__label">UPLINK</span>
+        <span class="dock__value" id="DockUplink">SECURE</span>
+      </div>
+      <div class="dock__cluster dock__cluster--right">
+        <span class="dock__label">DATE</span>
+        <span class="dock__value" id="WidgetDate">—</span>
+      </div>
+      <div class="dock__cluster dock__cluster--right">
+        <span class="dock__label">TIME</span>
+        <span class="dock__value" id="WidgetClock">--:--</span>
+      </div>
+      <button class="dock__reset" id="ResetChatBtn" title="Reset conversation">
+        <i class="bi bi-arrow-counterclockwise"></i>
+      </button>
+    </footer>
+
+    <!-- ======================== HISTORY OFFCANVAS ======================== -->
     <div
-      class="offcanvas offcanvas-start"
+      class="offcanvas offcanvas-end canvas-jarvis"
       tabindex="-1"
       id="offcanvasscrolling"
-      aria-labelledby="offcanvasscrollingLabel"
       data-bs-scroll="true"
     >
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasscrollingLabel">
-          <i class="bi bi-clock-history me-2"></i>Chat History
-        </h5>
-        <button
-          type="button"
-          class="btn-close btn-close-white"
-          data-bs-dismiss="offcanvas"
-          aria-label="Close"
-        ></button>
+        <div>
+          <div class="canvas__kicker">ARCHIVE</div>
+          <h5 class="offcanvas-title">Transmissions</h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
         <div id="chatHistoryContainer">
-          <p class="text-muted text-center mt-4" id="emptyHistoryMessage">
-            <i
-              class="bi bi-chat-left-text"
-              style="font-size: 3rem; opacity: 0.3"
-            ></i
-            ><br />
-            No chat history yet<br />
-            <small>Your conversations will appear here</small>
-          </p>
+          <div class="logempty" id="emptyHistoryMessage">
+            <i class="bi bi-broadcast" style="font-size: 2rem; opacity: 0.4"></i>
+            <p>No transmissions yet.</p>
+          </div>
           <div id="chatHistoryList"></div>
         </div>
-        <div class="mt-3 text-center">
-          <button class="btn btn-sm btn-outline-danger" id="clearHistoryBtn">
-            <i class="bi bi-trash3"></i> Clear History
+        <div class="canvas__foot">
+          <button class="ghost-btn ghost-btn--sm" id="clearHistoryBtn">
+            <i class="bi bi-trash3"></i> clear archive
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Modal Settings-->
+    <!-- ======================== SETTINGS MODAL ======================== -->
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content glass-effect">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel" style="color: white; text-align: center;">Assistant
-                        Settings</h5>
-                    <button type="button" class="btn-close btn-glow-red" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <nav>
-                        <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab"
-                                data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home"
-                                aria-selected="true">Personal</button>
-                            <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab"
-                                data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile"
-                                aria-selected="false">Commands</button>
-                            <button class="nav-link" id="nav-contact-tab" data-bs-toggle="tab"
-                                data-bs-target="#nav-contact" type="button" role="tab" aria-controls="nav-contact"
-                                aria-selected="false">Phone Book</button>
-                        </div>
-                    </nav>
-                    <div class="tab-content" id="nav-tabContent">
-
-                        <!-- Tab-1 -->
-                        <div class="tab-pane fade show active" id="nav-home" role="tabpanel"
-                            aria-labelledby="nav-home-tab" tabindex="0">
-                            <div class="d-flex align-items-start mt-4">
-                                <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist"
-                                    aria-orientation="vertical">
-                                    <button class="nav-link btn-style active" id="ProfileTab-tab" data-bs-toggle="pill"
-                                        data-bs-target="#ProfileTab" type="button" role="tab" aria-controls="ProfileTab"
-                                        aria-selected="true">Profile</button>
-                                    <button class="nav-link btn-style" id="EditProfileTab-tab" data-bs-toggle="pill"
-                                        data-bs-target="#EditProfileTab" type="button" role="tab"
-                                        aria-controls="EditProfileTab" aria-selected="false">Edit</button>
-                                </div>
-                                <div class="tab-content" id="v-pills-tabContent">
-
-                                    <!-- Link 1 -->
-                                    <div class="tab-pane fade show active" id="ProfileTab" role="tabpanel"
-                                        aria-labelledby="ProfileTab-tab">
-
-                                        <div class="p-4">
-                                            <p>Here you can see your personal details, also you can edit your personal
-                                                details </p>
-
-                                            <div class="mt-4">
-                                                <p><strong>Name: <span id="OwnerName"
-                                                            class="text-capitalize"></span></strong></p>
-                                                <p><strong>Mobile No: <span id="MobileNo"></span></strong></p>
-                                                <p><strong>Email: <span id="Email"></span></strong></p>
-                                                <p><strong>City: <span id="City"
-                                                            class="text-capitalize"></span></strong></p>
-                                            </div>
-
-                                        </div>
-
-
-                                    </div>
-
-                                    <!-- Link 2 -->
-                                    <div class="tab-pane fade" id="EditProfileTab" role="tabpanel"
-                                        aria-labelledby="EditProfileTab-tab">
-
-                                        <div class="p-4">
-                                            <p>Here you can see your personal details, also you can edit your personal
-                                                details </p>
-                                            <div class="mb-3 mt-4">
-                                                <input type="text" class="form-control glassy-form" id="InputOwnerName"
-                                                    placeholder="enter your name" required>
-                                            </div>
-                                            <div class="mb-3 mt-4">
-                                                <input type="tel" class="form-control glassy-form" id="InputMobileNo"
-                                                    placeholder="enter mobile no" required>
-                                            </div>
-
-                                            <div class="mb-3 mt-4">
-                                                <input type="email" class="form-control glassy-form" id="InputEmail"
-                                                    placeholder="enter email" required>
-                                            </div>
-
-                                            <div class="mb-3 mt-4">
-                                                <input type="text" class="form-control glassy-form" id="InputCity"
-                                                    placeholder="enter city" required>
-                                            </div>
-
-                                            <div class="text-center mt-4">
-                                                <button id="UpdateBtn" class="btn btn-glow">Submit</button>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tab 2 -->
-                        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab"
-                            tabindex="0">
-
-                            <div class="tab-pane fade show active" id="nav-home" role="tabpanel"
-                                aria-labelledby="nav-home-tab" tabindex="0">
-                                <div class="d-flex align-items-start mt-4">
-                                    <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist"
-                                        aria-orientation="vertical">
-                                        <button class="nav-link btn-style active" id="SystemCommand-tab"
-                                            data-bs-toggle="pill" data-bs-target="#SystemCommand" type="button"
-                                            role="tab" aria-controls="SystemCommand" aria-selected="true">System
-                                        </button>
-                                        <button class="nav-link btn-style" id="WebCommand-tab" data-bs-toggle="pill"
-                                            data-bs-target="#WebCommand" type="button" role="tab"
-                                            aria-controls="WebCommand" aria-selected="false">Web
-                                        </button>
-                                    </div>
-                                    <div class="tab-content" id="v-pills-tabContent">
-
-                                        <!-- System Command Section -->
-                                        <div class="tab-pane fade show active" id="SystemCommand" role="tabpanel"
-                                            aria-labelledby="SystemCommand-tab">
-
-                                            <div class="p-2">
-                                                <p> Add Your New Commands </p>
-
-                                                <div class="d-flex mt-2">
-                                                    <div class="mb-2 pl-2">
-                                                        <input type="text" class="form-control glassy-form"
-                                                            id="SysCommandKey" placeholder="keyword eg: notepad"
-                                                            required>
-                                                    </div>
-
-                                                    <div class="mb-3 ml-4 pl-4" style="padding-left: 5px;">
-                                                        <input type="text" class="form-control glassy-form"
-                                                            id="SysCommandValue" placeholder="Path eg: c:/notepad.exe"
-                                                            required>
-                                                    </div>
-
-                                                    <div class="text-center ml-4 pl-4" style="padding-left: 5px;">
-                                                        <button id="SysCommandAddBtn" class="btn btn-glow"
-                                                            style="width: 100%;">Add</button>
-                                                    </div>
-                                                </div>
-
-
-                                                <div class="table-responsive table-scroll">
-                                                    <table class="table">
-                                                        <thead>
-                                                            <tr>
-                                                                <th scope="col" class="text-light">#</th>
-                                                                <th scope="col" class="text-light">Keyword</th>
-                                                                <th scope="col" class="text-light">Path</th>
-                                                                <th scope="col" class="text-light">Delete</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody id="TableData">
-
-
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-
-
-
-
-                                            </div>
-                                        </div>
-
-                                        <!-- Web Command Section -->
-                                        <div class="tab-pane fade" id="WebCommand" role="tabpanel"
-                                            aria-labelledby="WebCommand-tab">
-
-                                            <div class="p-2">
-                                                <p> Add Your New Web Commands </p>
-
-                                                <div class="d-flex mt-2">
-                                                    <div class="mb-2 pl-2">
-                                                        <input type="text" class="form-control glassy-form"
-                                                            id="WebCommandKey" placeholder="keyword eg: google"
-                                                            required>
-                                                    </div>
-
-                                                    <div class="mb-3 ml-4 pl-4" style="padding-left: 5px;">
-                                                        <input type="text" class="form-control glassy-form"
-                                                            id="WebCommandValue" placeholder="Link eg: www.google.com"
-                                                            required>
-                                                    </div>
-
-                                                    <div class="text-center ml-4 pl-4" style="padding-left: 5px;">
-                                                        <button id="WebCommandAddBtn" class="btn btn-glow"
-                                                            style="width: 100%;">Add</button>
-                                                    </div>
-                                                </div>
-
-
-                                                <div class="table-responsive table-scroll">
-                                                    <table class="table">
-                                                        <thead>
-                                                            <tr>
-                                                                <th scope="col" class="text-light">#</th>
-                                                                <th scope="col" class="text-light">Keyword</th>
-                                                                <th scope="col" class="text-light">Url</th>
-                                                                <th scope="col" class="text-light">Delete</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody id="WebTableData">
-
-
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-
-
-
-
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                        </div>
-
-                        <!-- Tab-3 -->
-                        <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab"
-                            tabindex="0">
-
-                            <div class="d-flex align-items-start mt-4">
-                                <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist"
-                                    aria-orientation="vertical">
-                                    <button class="nav-link btn-style active" id="Contacts-tab" data-bs-toggle="pill"
-                                        data-bs-target="#Contacts" type="button" role="tab" aria-controls="Contacts"
-                                        aria-selected="true">Contacts</button>
-                                    <button class="nav-link btn-style" id="AddContacts-tab" data-bs-toggle="pill"
-                                        data-bs-target="#AddContacts" type="button" role="tab"
-                                        aria-controls="AddContacts" aria-selected="false">Add Contacts</button>
-                                </div>
-                                <div class="tab-content" id="v-pills-tabContent">
-
-                                    <!-- Link 1 -->
-                                    <div class="tab-pane fade show active" id="Contacts" role="tabpanel"
-                                        aria-labelledby="Contacts-tab">
-
-                                        <div class="p-2">
-                                            <p> Your Personal Contacts </p>
-
-                                            <div class="table-responsive table-scroll">
-                                                <table class="table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col" class="text-light">#</th>
-                                                            <th scope="col" class="text-light">Name</th>
-                                                            <th scope="col" class="text-light">Mobile No</th>
-                                                            <th scope="col" class="text-light">Address</th>
-                                                            <th scope="col" class="text-light">Delete</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="ContactTableData">
-
-
-                                                    </tbody>
-                                                </table>
-                                            </div>
-
-
-
-
-                                        </div>
-
-
-                                    </div>
-
-                                    <!-- Link 2 -->
-                                    <div class="tab-pane fade" id="AddContacts" role="tabpanel"
-                                        aria-labelledby="AddContacts-tab">
-
-                                        <div class="p-4">
-                                            <p>Add New Contacts Here, Note Name and Mobile number are mandatory fields
-                                            </p>
-                                            <div class="mb-3 mt-4">
-                                                <input type="text" class="form-control glassy-form"
-                                                    id="InputContactName" placeholder="enter name" required>
-                                            </div>
-
-                                            <div class="mb-3 mt-4">
-                                                <input type="tel" class="form-control glassy-form"
-                                                    id="InputContactMobileNo" placeholder="enter mobile no" required>
-                                            </div>
-
-                                            <div class="mb-3 mt-4">
-                                                <input type="text" class="form-control glassy-form"
-                                                    id="InputContactCity" placeholder="enter city" required>
-                                            </div>
-
-                                            <div class="text-center mt-4">
-                                                <button id="AddContactBtn" class="btn btn-glow">Submit</button>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content modal-jarvis">
+          <div class="modal-header">
+            <div>
+              <div class="canvas__kicker">CONSOLE</div>
+              <h5 class="modal-title" id="exampleModalLabel">Preferences</h5>
             </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <nav>
+              <div class="nav nav-tabs jarvis-tabs" id="nav-tab" role="tablist">
+                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab">PROFILE</button>
+                <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab">COMMANDS</button>
+                <button class="nav-link" id="nav-contact-tab" data-bs-toggle="tab" data-bs-target="#nav-contact" type="button" role="tab">ROSTER</button>
+              </div>
+            </nav>
+            <div class="tab-content pt-3" id="nav-tabContent">
+              <div class="tab-pane fade show active" id="nav-home" role="tabpanel">
+                <div class="d-flex align-items-start mt-2 settings-cols">
+                  <div class="nav flex-column nav-pills me-3 jarvis-pills" role="tablist" aria-orientation="vertical">
+                    <button class="nav-link active" id="ProfileTab-tab" data-bs-toggle="pill" data-bs-target="#ProfileTab" type="button" role="tab">VIEW</button>
+                    <button class="nav-link" id="EditProfileTab-tab" data-bs-toggle="pill" data-bs-target="#EditProfileTab" type="button" role="tab">EDIT</button>
+                  </div>
+                  <div class="tab-content flex-grow-1">
+                    <div class="tab-pane fade show active" id="ProfileTab" role="tabpanel">
+                      <div class="settings-block">
+                        <p class="muted">Operator file — local storage only.</p>
+                        <div class="kv">
+                          <span>Name</span><strong id="OwnerName" class="text-capitalize">—</strong>
+                          <span>Mobile</span><strong id="MobileNo">—</strong>
+                          <span>Email</span><strong id="Email">—</strong>
+                          <span>City</span><strong id="City" class="text-capitalize">—</strong>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="EditProfileTab" role="tabpanel">
+                      <div class="settings-block">
+                        <p class="muted">Update operator file.</p>
+                        <input type="text" class="jarvis-input mb-2" id="InputOwnerName" placeholder="Name" required />
+                        <input type="tel" class="jarvis-input mb-2" id="InputMobileNo" placeholder="Mobile" required />
+                        <input type="email" class="jarvis-input mb-2" id="InputEmail" placeholder="Email" required />
+                        <input type="text" class="jarvis-input mb-3" id="InputCity" placeholder="City" required />
+                        <div class="text-end">
+                          <button id="UpdateBtn" class="primary-btn">SAVE</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="nav-profile" role="tabpanel">
+                <div class="d-flex align-items-start mt-2 settings-cols">
+                  <div class="nav flex-column nav-pills me-3 jarvis-pills" role="tablist" aria-orientation="vertical">
+                    <button class="nav-link active" id="SystemCommand-tab" data-bs-toggle="pill" data-bs-target="#SystemCommand" type="button" role="tab">SYSTEM</button>
+                    <button class="nav-link" id="WebCommand-tab" data-bs-toggle="pill" data-bs-target="#WebCommand" type="button" role="tab">WEB</button>
+                  </div>
+                  <div class="tab-content flex-grow-1">
+                    <div class="tab-pane fade show active" id="SystemCommand" role="tabpanel">
+                      <div class="settings-block">
+                        <p class="muted">Map a keyword to an app on this machine.</p>
+                        <div class="cmd-row">
+                          <input type="text" class="jarvis-input" id="SysCommandKey" placeholder="keyword" required />
+                          <input type="text" class="jarvis-input" id="SysCommandValue" placeholder="path" required />
+                          <button id="SysCommandAddBtn" class="primary-btn">ADD</button>
+                        </div>
+                        <div class="table-scroll mt-3">
+                          <table class="table jarvis-table">
+                            <thead><tr><th>#</th><th>KEYWORD</th><th>PATH</th><th></th></tr></thead>
+                            <tbody id="TableData"></tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="WebCommand" role="tabpanel">
+                      <div class="settings-block">
+                        <p class="muted">Map a keyword to a website.</p>
+                        <div class="cmd-row">
+                          <input type="text" class="jarvis-input" id="WebCommandKey" placeholder="keyword" required />
+                          <input type="text" class="jarvis-input" id="WebCommandValue" placeholder="url" required />
+                          <button id="WebCommandAddBtn" class="primary-btn">ADD</button>
+                        </div>
+                        <div class="table-scroll mt-3">
+                          <table class="table jarvis-table">
+                            <thead><tr><th>#</th><th>KEYWORD</th><th>URL</th><th></th></tr></thead>
+                            <tbody id="WebTableData"></tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="nav-contact" role="tabpanel">
+                <div class="d-flex align-items-start mt-2 settings-cols">
+                  <div class="nav flex-column nav-pills me-3 jarvis-pills" role="tablist" aria-orientation="vertical">
+                    <button class="nav-link active" id="Contacts-tab" data-bs-toggle="pill" data-bs-target="#Contacts" type="button" role="tab">VIEW</button>
+                    <button class="nav-link" id="AddContacts-tab" data-bs-toggle="pill" data-bs-target="#AddContacts" type="button" role="tab">ADD</button>
+                  </div>
+                  <div class="tab-content flex-grow-1">
+                    <div class="tab-pane fade show active" id="Contacts" role="tabpanel">
+                      <div class="settings-block">
+                        <p class="muted">Roster — used by WhatsApp commands.</p>
+                        <div class="table-scroll">
+                          <table class="table jarvis-table">
+                            <thead><tr><th>#</th><th>NAME</th><th>MOBILE</th><th>CITY</th><th></th></tr></thead>
+                            <tbody id="ContactTableData"></tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="AddContacts" role="tabpanel">
+                      <div class="settings-block">
+                        <p class="muted">Name and mobile required.</p>
+                        <input type="text" class="jarvis-input mb-2" id="InputContactName" placeholder="Name" required />
+                        <input type="tel" class="jarvis-input mb-2" id="InputContactMobileNo" placeholder="Mobile" required />
+                        <input type="text" class="jarvis-input mb-3" id="InputContactCity" placeholder="City" required />
+                        <div class="text-end">
+                          <button id="AddContactBtn" class="primary-btn">ENROLL</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!--Jquery  -->
+    <!-- Scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-
-    <!-- Bootstrap -->
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
       crossorigin="anonymous"
     ></script>
-
-    <!-- Particle js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.14.1/jquery-ui.min.js"></script>
-
-    <!--SiriWave - Load before main.js-->
     <script src="https://unpkg.com/siriwave/dist/siriwave.umd.min.js"></script>
-
-    <script src="script.js"></script>
-
-    <!-- Textillate: local lettering & fittext, CDN for textillate core -->
-    <script src="assets(%20images%20)/vendore/texllate-20251016T072024Z-1-001/texllate/jquery.lettering.js"></script>
-    <script src="assets(%20images%20)/vendore/texllate-20251016T072024Z-1-001/texllate/jquery.fittext.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/textillate/0.4.0/jquery.textillate.min.js"></script>
-
-    <!-- Eel must be loaded before main.js so JS can expose functions for Python -->
-    <!-- Use the absolute path `/eel.js` which is served by the Python backend -->
     <script src="/eel.js"></script>
     <script src="main.js"></script>
     <script src="controller.js"></script>
 
-    <!-- Eel Integration Script -->
     <script>
-      // Test Eel connection when page loads
-      $(document).ready(function () {
-        // Test connection to Python backend
-        eel.get_app_info()(function (response) {
-          console.log("Connected to Hey Dude backend:", response);
-          // You can add a connection indicator here if needed
-        });
-
-        // Add ESC key to close app (optional)
+      $(function () {
+        if (typeof eel !== "undefined" && eel.get_app_info) {
+          eel.get_app_info()(function () {
+            $("#connectionStatus").addClass("is-online")
+              .find(".status-text").text("online");
+          });
+        }
         $(document).keyup(function (e) {
-          if (e.key === "Escape") {
-            if (confirm("Do you want to close Hey Dude?")) {
-              eel.close_app();
-            }
-          }
-        });
-
-        // Add a small debug control to send a test message from backend
-        var debugBtn = $(
-          '<button id="debugSend" style="position:fixed;top:40px;right:12px;z-index:9999;padding:6px 10px;border-radius:6px;background:#0088ff;color:#fff;border:none;">Send Debug</button>'
-        );
-        $("body").append(debugBtn);
-        $(document).on("click", "#debugSend", function () {
-          console.log("Calling eel.debug_send_test()...");
-          try {
-            eel.debug_send_test("Test message from Python")((resp) => {
-              console.log("debug_send_test response:", resp);
-              if (resp && resp.status === "ok") {
-                $("#connectionStatus")
-                  .text("Debug OK")
-                  .css("background", "rgba(0,150,0,0.8)");
-              } else {
-                $("#connectionStatus")
-                  .text("Debug Failed")
-                  .css("background", "rgba(150,0,0,0.8)");
-              }
-            });
-          } catch (err) {
-            console.error("Error calling debug_send_test:", err);
-            $("#connectionStatus")
-              .text("Debug Error")
-              .css("background", "rgba(150,0,0,0.8)");
+          if (e.key === "Escape" && !$(".modal.show, .offcanvas.show").length) {
+            if (confirm("Close Hey Dude?")) eel.close_app();
           }
         });
       });
