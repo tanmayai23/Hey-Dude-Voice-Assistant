@@ -1,5 +1,5 @@
 import re
-from Backend.config import ASSISTANT_NAME
+
 
 def extract_yt_term(command):
     """Extract the search term from YouTube play command"""
@@ -27,17 +27,3 @@ def extract_yt_term(command):
     
     return None
 
-def remove_words(input_strings, words_to_remove):
-    # define a regular expressin patern to capture the song name
-    words = input_string.split()
-    filtered_words = [word for word in words if word.lower() not in words_to_remove]    
-    result_string = ' '.join(filtered_words)
-    
-    return result_string
-
-
-# Test code - commented out to avoid running on import
-# input_string = "make a phone call to papa "
-# words_to_remove = [ASSISTANT_NAME, "make", "a", "phone", "call", "to", "send", "message", "whatsapp", ""]
-# result = remove_words(input_string, words_to_remove)
-# print("Resulting string:", result)

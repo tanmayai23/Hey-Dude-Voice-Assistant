@@ -30,9 +30,8 @@ $(function () {
     const hh = String(now.getHours()).padStart(2, "0");
     const mm = String(now.getMinutes()).padStart(2, "0");
     const stamp = `${hh}:${mm}`;
-    $("#WidgetClock").text(stamp);
     $("#TopTime").text(stamp);
-    $("#WidgetDate").text(
+    $("#TopDate").text(
       now.toLocaleDateString(undefined, {
         month: "short", day: "numeric", year: "numeric"
       }).toUpperCase()
@@ -40,6 +39,126 @@ $(function () {
   }
   tickClock();
   setInterval(tickClock, 30 * 1000);
+
+  // ============================================================
+  // Session uptime — ticks since the page loaded
+  // ============================================================
+  var sessionStartTs = Date.now();
+  function tickSession() {
+    var diff = Math.floor((Date.now() - sessionStartTs) / 1000);
+    var hh = Math.floor(diff / 3600);
+    var mm = Math.floor((diff % 3600) / 60);
+    var ss = diff % 60;
+    var pad = function (n) { return String(n).padStart(2, "0"); };
+    var label = hh > 0
+      ? hh + ":" + pad(mm) + ":" + pad(ss)
+      : pad(mm) + ":" + pad(ss);
+    var el = document.getElementById("TopSessionVal");
+    if (el) el.textContent = label;
+  }
+  tickSession();
+  setInterval(tickSession, 1000);
+
+  // ============================================================
+  // Quick launchers — open in default browser via Python (or new tab fallback)
+  // ============================================================
+  $(".dock__launch").on("click", function (e) {
+    e.preventDefault();
+    var url = $(this).data("url");
+    if (!url) return;
+    try {
+      window.open(url, "_blank", "noopener");
+    } catch (err) {
+      window.location.href = url;
+    }
+  });
+
+  // ============================================================
+  // System vitals — RAM / CPU / Battery in dock
+  // ============================================================
+  function setStatBar(barId, valueId, pct) {
+    var bar = document.getElementById(barId);
+    var val = document.getElementById(valueId);
+    if (!bar || !val) return;
+    var clamped = Math.max(0, Math.min(100, Math.round(pct)));
+    bar.style.width = clamped + "%";
+    bar.classList.toggle("is-warn", clamped >= 70 && clamped < 90);
+    bar.classList.toggle("is-crit", clamped >= 90);
+    val.textContent = clamped + "%";
+  }
+
+  function pollStats() {
+    if (typeof eel === "undefined" || !eel.get_system_stats) return;
+    eel.get_system_stats()(function (s) {
+      if (!s || !s.ok) return;
+      setStatBar("StatRamBar", "StatRam", s.ram);
+      setStatBar("StatCpuBar", "StatCpu", s.cpu);
+      var batWrap = document.getElementById("StatBatWrap");
+      if (s.battery !== null && s.battery !== undefined) {
+        if (batWrap) batWrap.hidden = false;
+        setStatBar("StatBatBar", "StatBat", s.battery);
+      } else if (batWrap) {
+        batWrap.hidden = true;
+      }
+    });
+  }
+  pollStats();
+  setInterval(pollStats, 5000);
+
+  // ============================================================
+  // System alert toast — pushed from Python monitor
+  // ============================================================
+  window.systemAlert = function (payload) {
+    var a = document.getElementById("SysAlert");
+    if (!a) return;
+    var msg = document.getElementById("SysAlertMsg");
+    var detail = document.getElementById("SysAlertDetail");
+    var text = "Boss, dhyan do.";
+    if (payload.type === "ram") {
+      text = "Boss, RAM " + payload.value + "% use ho rahi hai — saaf kar dun?";
+    } else if (payload.type === "cpu") {
+      text = "Boss, CPU " + payload.value + "% pe stuck hai — kuch bhari chal raha hai.";
+    } else if (payload.type === "battery") {
+      text = "Boss, battery " + payload.value + "% — charge laga lo.";
+    }
+    if (msg) msg.textContent = text;
+    if (detail) {
+      detail.textContent = (payload.top || [])
+        .slice(0, 3)
+        .map(function (p) { return p.name + " " + p.rss_mb + "MB"; })
+        .join(" · ");
+    }
+    a.hidden = false;
+  };
+
+  window.systemAlertResolved = function (r) {
+    var a = document.getElementById("SysAlert");
+    if (!a) return;
+    var msg = document.getElementById("SysAlertMsg");
+    if (msg) {
+      msg.textContent = "Saaf ho gaya boss, " + (r && r.freed_mb ? r.freed_mb : 0) + " MB free kar diya.";
+    }
+    setTimeout(function () { a.hidden = true; }, 2500);
+  };
+
+  $("#SysAlertYes").on("click", function () {
+    if (typeof eel !== "undefined" && eel.run_cleanup) {
+      var msg = document.getElementById("SysAlertMsg");
+      if (msg) msg.textContent = "Saaf kar raha hun boss…";
+      eel.run_cleanup()();
+    } else {
+      document.getElementById("SysAlert").hidden = true;
+    }
+  });
+  $("#SysAlertNo").on("click", function () {
+    document.getElementById("SysAlert").hidden = true;
+  });
+
+  // Expose so Python's `eel.systemAlert(...)()` push can call us
+  if (typeof eel !== "undefined" && eel.expose) {
+    eel.expose(window.systemAlert, "systemAlert");
+    eel.expose(window.systemAlertResolved, "systemAlertResolved");
+  }
 
   // ============================================================
   // Greeting
@@ -175,21 +294,20 @@ $(function () {
     }
   }
 
+  // Enter listening mode — animation lives on the mic button itself
+  // (Claude / ChatGPT / Perplexity style). The big SiriWave overlay is
+  // disabled in CSS, so we skip its init entirely to save CPU.
   function showLiveBar() {
-    $("#LiveBar").removeAttr("hidden");
-    $("#SiriMessage").text("listening — speak naturally, take your time");
     $("#Orb").addClass("is-listening");
     $(".composer__shell").addClass("is-listening");
+    $("#MicBtn").addClass("active");
     $("#ComposerHint").attr("hidden", true);
     $("#ComposerLive").removeAttr("hidden");
     $("#DockVoice").text("LIVE");
     document.body.classList.add("is-listening-mode");
-    if (ensureSiriWave()) siriWave.start();
   }
 
   function hideLiveBar() {
-    if (siriWave) siriWave.stop();
-    $("#LiveBar").attr("hidden", true);
     $("#Orb").removeClass("is-listening is-thinking");
     $("#MicBtn").removeClass("active");
     $(".composer__shell").removeClass("is-listening");

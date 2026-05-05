@@ -27,13 +27,14 @@ def opencommand(query):
     import time
 
     query = query.lower()
-    query = query.replace("hey dude", "")
+    for wake in ("hey boss", "hai boss", "hey dude", "hai dude"):
+        query = query.replace(wake, "")
     query = query.replace("open", "")
     app_name = query.strip()
 
     if not app_name:
-        speak_text("No application specified")
-        eel.receiveRecognitionResult("No application specified")()
+        speak_text("Boss, kya kholna hai bataiye")
+        eel.receiveRecognitionResult("Boss, kya kholna hai bataiye")()
         return
 
     try:
@@ -45,7 +46,7 @@ def opencommand(query):
         results = cursor.fetchall()
 
         if results:
-            response_text = f"Opening {app_name}"
+            response_text = f"Boss, {app_name} khol raha hun"
             speak_text(response_text)
             eel.receiveRecognitionResult(response_text)()
             os.startfile(results[0][0])
@@ -54,25 +55,25 @@ def opencommand(query):
             results = cursor.fetchall()
 
             if results:
-                response_text = f"Opening {app_name}"
+                response_text = f"Boss, {app_name} khol raha hun"
                 speak_text(response_text)
                 eel.receiveRecognitionResult(response_text)()
                 webbrowser.open(results[0][0])
             else:
-                response_text = f"Opening {app_name}"
+                response_text = f"Boss, {app_name} kholne ki koshish kar raha hun"
                 speak_text(response_text)
                 eel.receiveRecognitionResult(response_text)()
                 try:
                     os.system('start ' + app_name)
                 except Exception:
-                    speak_text("Not found")
-                    eel.receiveRecognitionResult("Not found")()
+                    speak_text("Sorry boss, ye mil nahi raha")
+                    eel.receiveRecognitionResult("Sorry boss, ye mil nahi raha")()
 
         con.close()
 
     except Exception:
-        speak_text("Something went wrong")
-        eel.receiveRecognitionResult("Something went wrong")()
+        speak_text("Sorry boss, kuch gadbad ho gayi")
+        eel.receiveRecognitionResult("Sorry boss, kuch gadbad ho gayi")()
 
 
 def PlayYoutube(query):
@@ -84,12 +85,12 @@ def PlayYoutube(query):
     search_term = extract_yt_term(query)
 
     if not (search_term and search_term.strip()):
-        response_text = "Can you repeat your command"
+        response_text = "Sorry boss, samjha nahi — phir se bolo"
         speak_text(response_text)
         eel.receiveRecognitionResult(response_text)()
         return
 
-    response_text = f"Yes, playing {search_term} on YouTube"
+    response_text = f"Ji boss, YouTube pe {search_term} chala raha hun"
     speak_text(response_text)
     eel.receiveRecognitionResult(response_text)()
 
@@ -97,5 +98,5 @@ def PlayYoutube(query):
         import pywhatkit as kit
         kit.playonyt(search_term)
     except Exception:
-        speak_text("Sorry, I couldn't open YouTube")
-        eel.receiveRecognitionResult("Sorry, I couldn't open YouTube")()
+        speak_text("Sorry boss, YouTube nahi khul paya")
+        eel.receiveRecognitionResult("Sorry boss, YouTube nahi khul paya")()

@@ -51,6 +51,11 @@
       </a>
 
       <div class="top__cluster">
+        <span class="chip chip--date" id="TopDate" title="Date">—</span>
+        <span class="chip chip--session" id="TopSession" title="Session uptime">
+          <i class="bi bi-stopwatch"></i>
+          <span id="TopSessionVal">00:00</span>
+        </span>
         <span class="chip chip--time" id="TopTime">--:--</span>
         <span id="connectionStatus" class="chip chip--status">
           <span class="status-dot"></span>
@@ -213,19 +218,19 @@
             </span>
             <span class="composer__live" id="ComposerLive" hidden>
               <span class="composer__live-dot"></span>
-              listening — speak as long as you need
+              sun raha hun boss…
             </span>
           </div>
         </div>
 
         <!-- Suggestion chips -->
         <div class="suggestions" id="Suggestions">
-          <button class="sug" data-cmd="what's the weather like today">weather</button>
-          <button class="sug" data-cmd="play lofi on youtube">play lofi</button>
+          <button class="sug" data-cmd="mausam kaisa hai aaj">mausam</button>
+          <button class="sug" data-cmd="play lofi music on youtube">play lofi</button>
           <button class="sug" data-cmd="open gmail">gmail</button>
           <button class="sug" data-cmd="open whatsapp web">whatsapp</button>
-          <button class="sug" data-cmd="tell me something interesting">surprise me</button>
-          <button class="sug" data-cmd="what should i cook tonight">dinner ideas</button>
+          <button class="sug" data-cmd="boss kuch interesting batao mujhe">kuch sunao</button>
+          <button class="sug" data-cmd="aaj khane me kya banaun boss">khana ideas</button>
         </div>
       </section>
 
@@ -257,30 +262,80 @@
 
     <!-- ======================== BOTTOM BAR ======================== -->
     <footer class="dock">
-      <div class="dock__cluster">
-        <span class="dock__label">SYSTEM</span>
-        <span class="dock__value">NOMINAL</span>
+      <div class="dock__group dock__group--status">
+        <div class="dock__cluster">
+          <span class="dock__label">SYSTEM</span>
+          <span class="dock__value" id="DockSystem">NOMINAL</span>
+        </div>
+        <div class="dock__cluster">
+          <span class="dock__label">VOICE</span>
+          <span class="dock__value" id="DockVoice">STANDBY</span>
+        </div>
+        <div class="dock__cluster">
+          <span class="dock__label">UPLINK</span>
+          <span class="dock__value" id="DockUplink">SECURE</span>
+        </div>
+
+        <!-- Live system mini-stats — RAM / CPU / Battery -->
+        <div class="dock__stats" id="DockStats" aria-label="System vitals">
+          <span class="dock__stat" title="RAM usage">
+            <span class="dock__stat-label">RAM</span>
+            <span class="dock__stat-bar"><span class="dock__stat-fill" id="StatRamBar"></span></span>
+            <span class="dock__stat-value" id="StatRam">—</span>
+          </span>
+          <span class="dock__stat" title="CPU usage">
+            <span class="dock__stat-label">CPU</span>
+            <span class="dock__stat-bar"><span class="dock__stat-fill" id="StatCpuBar"></span></span>
+            <span class="dock__stat-value" id="StatCpu">—</span>
+          </span>
+          <span class="dock__stat" title="Battery" id="StatBatWrap" hidden>
+            <span class="dock__stat-label">BAT</span>
+            <span class="dock__stat-bar"><span class="dock__stat-fill" id="StatBatBar"></span></span>
+            <span class="dock__stat-value" id="StatBat">—</span>
+          </span>
+        </div>
       </div>
-      <div class="dock__cluster">
-        <span class="dock__label">VOICE</span>
-        <span class="dock__value" id="DockVoice">STANDBY</span>
+
+      <div class="dock__group dock__group--launchers" aria-label="Quick launchers">
+        <a class="dock__launch dock__launch--whatsapp" data-app="whatsapp"
+           data-url="https://web.whatsapp.com" href="#" title="WhatsApp Web">
+          <i class="bi bi-whatsapp"></i>
+        </a>
+        <a class="dock__launch dock__launch--spotify" data-app="spotify"
+           data-url="https://open.spotify.com" href="#" title="Spotify">
+          <i class="bi bi-spotify"></i>
+        </a>
+        <a class="dock__launch dock__launch--youtube" data-app="youtube"
+           data-url="https://youtube.com" href="#" title="YouTube">
+          <i class="bi bi-youtube"></i>
+        </a>
+        <a class="dock__launch dock__launch--linkedin" data-app="linkedin"
+           data-url="https://www.linkedin.com/feed/" href="#" title="LinkedIn">
+          <i class="bi bi-linkedin"></i>
+        </a>
+        <a class="dock__launch dock__launch--github" data-app="github"
+           data-url="https://github.com" href="#" title="GitHub">
+          <i class="bi bi-github"></i>
+        </a>
+        <span class="dock__launch-divider" aria-hidden="true"></span>
+        <button class="dock__reset" id="ResetChatBtn" title="Reset conversation">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
       </div>
-      <div class="dock__cluster">
-        <span class="dock__label">UPLINK</span>
-        <span class="dock__value" id="DockUplink">SECURE</span>
-      </div>
-      <div class="dock__cluster dock__cluster--right">
-        <span class="dock__label">DATE</span>
-        <span class="dock__value" id="WidgetDate">—</span>
-      </div>
-      <div class="dock__cluster dock__cluster--right">
-        <span class="dock__label">TIME</span>
-        <span class="dock__value" id="WidgetClock">--:--</span>
-      </div>
-      <button class="dock__reset" id="ResetChatBtn" title="Reset conversation">
-        <i class="bi bi-arrow-counterclockwise"></i>
-      </button>
     </footer>
+
+    <!-- ======================== SYSTEM ALERT TOAST ======================== -->
+    <div class="sys-alert" id="SysAlert" hidden role="alertdialog" aria-live="polite">
+      <span class="sys-alert__sigil"><i class="bi bi-cpu"></i></span>
+      <div class="sys-alert__body">
+        <p class="sys-alert__msg" id="SysAlertMsg">Boss, RAM zyada use ho rahi hai — saaf kar dun?</p>
+        <p class="sys-alert__detail" id="SysAlertDetail"></p>
+      </div>
+      <div class="sys-alert__actions">
+        <button class="primary-btn primary-btn--sm" id="SysAlertYes">Haan</button>
+        <button class="ghost-btn ghost-btn--sm" id="SysAlertNo">Nahi</button>
+      </div>
+    </div>
 
     <!-- ======================== HISTORY OFFCANVAS ======================== -->
     <div

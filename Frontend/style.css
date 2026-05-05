@@ -70,6 +70,11 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body {
+  display: flex;
+  flex-direction: column;
+}
+
 button { font-family: inherit; cursor: pointer; }
 input  { font-family: inherit; }
 
@@ -184,6 +189,7 @@ body.is-listening-mode .ambient__core {
 .top {
   position: relative;
   z-index: 5;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -248,6 +254,9 @@ body.is-listening-mode .ambient__core {
   -webkit-backdrop-filter: blur(14px);
 }
 .chip--time { color: var(--paper); font-variant-numeric: tabular-nums; }
+.chip--date { color: var(--paper-soft); font-variant-numeric: tabular-nums; }
+.chip--session { color: var(--paper-soft); font-variant-numeric: tabular-nums; gap: 5px; }
+.chip--session i { color: var(--red); font-size: 12px; filter: drop-shadow(0 0 4px var(--red-glow)); }
 
 .status-dot {
   width: 7px; height: 7px;
@@ -292,12 +301,14 @@ body.is-listening-mode .ambient__core {
 .stage {
   position: relative;
   z-index: 1;
-  height: calc(100vh - 160px);
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   padding: 8px 36px 24px 36px;
+  overflow: hidden;
 }
 
 /* Hero */
@@ -688,24 +699,44 @@ body.is-listening-mode .ambient__core {
   opacity: 0;
   pointer-events: none;
 }
-.mic-btn.active .mic-btn__halo { opacity: 1; animation: mic-halo 1.4s cubic-bezier(.4,0,.2,1) infinite; }
-.mic-btn.active .mic-btn__halo--2 { animation-delay: 0.7s; opacity: 1; }
-@keyframes mic-halo {
-  0%   { transform: scale(0.95); opacity: 0.8; }
-  100% { transform: scale(1.7); opacity: 0; }
-}
+/* Listening state — Claude / ChatGPT style:
+   slow breathing button + two staggered halo rings expanding outward,
+   icon gently pulsing inside. No big overlays. */
 .mic-btn.active {
   background: linear-gradient(135deg, var(--red-soft) 0%, var(--red) 100%);
-  animation: mic-glow 1.6s ease-in-out infinite;
+  animation: mic-breathe 2.4s ease-in-out infinite;
 }
-.mic-btn.active i { animation: mic-shake 0.85s ease-in-out infinite; }
-@keyframes mic-shake {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.18); }
+.mic-btn.active i {
+  animation: mic-icon-pulse 1.6s ease-in-out infinite;
 }
-@keyframes mic-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 45, 79, 0.5); }
-  50%      { box-shadow: 0 0 0 10px rgba(255, 45, 79, 0); }
+.mic-btn.active .mic-btn__halo {
+  opacity: 1;
+  animation: mic-halo 1.8s cubic-bezier(.4, 0, .2, 1) infinite;
+}
+.mic-btn.active .mic-btn__halo--2 {
+  animation-delay: 0.9s;
+  opacity: 1;
+}
+@keyframes mic-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 45, 79, 0.55),
+                0 4px 18px -4px var(--red-glow);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 14px rgba(255, 45, 79, 0),
+                0 6px 26px -4px var(--red-glow);
+  }
+}
+@keyframes mic-icon-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: 0.7; transform: scale(0.92); }
+}
+@keyframes mic-halo {
+  0%   { transform: scale(0.95); opacity: 0.75; }
+  70%  { opacity: 0.18; }
+  100% { transform: scale(1.95); opacity: 0; }
 }
 
 .send-btn {
@@ -724,6 +755,7 @@ body.is-listening-mode .ambient__core {
 /* Status under composer */
 .composer__status {
   margin-top: 14px;
+  margin-bottom: 6px;
   text-align: center;
   font-family: var(--f-mono);
   font-size: 10px;
@@ -731,20 +763,28 @@ body.is-listening-mode .ambient__core {
   text-transform: uppercase;
   color: var(--paper-fade);
   min-height: 18px;
+  position: relative;
+  z-index: 2;
 }
 .composer__live {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   color: var(--red);
   font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: lowercase;
 }
 .composer__live-dot {
-  width: 7px; height: 7px;
+  width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--red);
-  box-shadow: 0 0 8px var(--red);
-  animation: dot-pulse 0.9s ease-in-out infinite;
+  box-shadow: 0 0 10px var(--red), 0 0 22px var(--red-glow);
+  animation: live-dot-pulse 1.2s ease-in-out infinite;
+}
+@keyframes live-dot-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%      { transform: scale(1.35); opacity: 0.55; }
 }
 
 /* Suggestion chips */
@@ -779,9 +819,12 @@ body.is-listening-mode .ambient__core {
 }
 
 /* ================================================================
-   LIVE BAR
+   LIVE BAR — disabled. Feedback now lives on the mic button itself
+   (Claude / ChatGPT / Perplexity style). The transcript appears
+   directly inside the search input as the user speaks.
 ================================================================ */
-.livebar {
+.livebar { display: none !important; }
+._livebar_legacy {
   position: fixed;
   left: 36px; right: 36px;
   bottom: 78px;
@@ -943,15 +986,20 @@ body.is-listening-mode .ambient__core {
 }
 
 /* ================================================================
-   DOCK (bottom)
+   DOCK (bottom) — split into status group + meta group so wrapping
+   is clean below ~720px instead of relying on margin-left:auto hacks.
 ================================================================ */
 .dock {
   position: relative;
   z-index: 5;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 28px;
-  padding: 14px 36px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  row-gap: 10px;
+  padding: 16px 36px;
   border-top: 1px solid var(--line);
   background: linear-gradient(0deg, rgba(255, 45, 79, 0.05), transparent);
   font-family: var(--f-mono);
@@ -960,14 +1008,54 @@ body.is-listening-mode .ambient__core {
   text-transform: uppercase;
   animation: drop-in 0.55s 0.2s both;
 }
+.dock__group {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.dock__group--launchers { justify-content: flex-end; gap: 8px; }
+
 .dock__cluster { display: flex; flex-direction: column; gap: 2px; line-height: 1.1; }
-.dock__cluster--right { margin-left: auto; }
-.dock__cluster--right + .dock__cluster--right { margin-left: 0; }
 .dock__label { color: var(--paper-fade); font-size: 9px; letter-spacing: 0.28em; }
 .dock__value { color: var(--paper); font-weight: 500; font-variant-numeric: tabular-nums; }
 
+/* Quick launchers — circular icon buttons with brand-tinted hover */
+.dock__launch {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--paper-mute);
+  font-size: 14px;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: color 0.25s, border-color 0.25s, background 0.25s,
+              box-shadow 0.25s, transform 0.25s;
+}
+.dock__launch i { transition: transform 0.25s ease; }
+.dock__launch:hover { transform: translateY(-1px); }
+.dock__launch:hover i { transform: scale(1.08); }
+.dock__launch:active { transform: translateY(0) scale(0.96); }
+
+/* Subtle brand tints — kept restrained so the iron-man palette dominates */
+.dock__launch--whatsapp:hover { color: #25d366; border-color: rgba(37, 211, 102, 0.55); background: rgba(37, 211, 102, 0.08); box-shadow: 0 0 14px -4px rgba(37, 211, 102, 0.55); }
+.dock__launch--spotify:hover  { color: #1ed760; border-color: rgba(30, 215, 96, 0.55);  background: rgba(30, 215, 96, 0.08);  box-shadow: 0 0 14px -4px rgba(30, 215, 96, 0.55);  }
+.dock__launch--youtube:hover  { color: #ff3344; border-color: rgba(255, 51, 68, 0.6);   background: rgba(255, 51, 68, 0.10);  box-shadow: 0 0 14px -4px rgba(255, 51, 68, 0.55);  }
+.dock__launch--linkedin:hover { color: #4aa3ff; border-color: rgba(74, 163, 255, 0.55); background: rgba(74, 163, 255, 0.08); box-shadow: 0 0 14px -4px rgba(74, 163, 255, 0.55); }
+.dock__launch--github:hover   { color: var(--paper); border-color: var(--paper-mute);   background: rgba(255, 255, 255, 0.06); box-shadow: 0 0 14px -4px rgba(255, 255, 255, 0.35); }
+
+.dock__launch-divider {
+  width: 1px; height: 22px;
+  background: var(--line-2);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
 .dock__reset {
-  width: 32px; height: 32px;
+  width: 34px; height: 34px;
   border: 1px solid var(--line-2);
   border-radius: 50%;
   background: transparent;
@@ -975,12 +1063,139 @@ body.is-listening-mode .ambient__core {
   display: grid; place-items: center;
   font-size: 14px;
   transition: all 0.25s ease;
+  flex-shrink: 0;
 }
 .dock__reset:hover {
   color: var(--red);
   border-color: var(--red);
   background: rgba(255, 45, 79, 0.08);
   transform: rotate(-90deg);
+}
+
+/* Live RAM / CPU / Battery mini-bars inside the status group */
+.dock__stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: 18px;
+  margin-left: 4px;
+  border-left: 1px solid var(--line);
+}
+.dock__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+}
+.dock__stat-label { color: var(--paper-fade); min-width: 22px; }
+.dock__stat-bar {
+  position: relative;
+  display: inline-block;
+  width: 56px; height: 4px;
+  background: rgba(255, 213, 213, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.dock__stat-fill {
+  position: absolute; inset: 0 auto 0 0;
+  width: 0%;
+  background: linear-gradient(90deg, #00d9ff, #ff5566);
+  transition: width 0.45s ease, background 0.45s ease;
+  box-shadow: 0 0 8px rgba(255, 45, 79, 0.4);
+}
+.dock__stat-fill.is-warn  { background: linear-gradient(90deg, #ffb454, #ff5566); }
+.dock__stat-fill.is-crit  { background: linear-gradient(90deg, #ff5566, #ff2d4f); animation: pulse-crit 1.4s ease-in-out infinite; }
+.dock__stat-value {
+  color: var(--paper);
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+  text-align: right;
+}
+@keyframes pulse-crit {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 45, 79, 0.4); }
+  50%      { box-shadow: 0 0 14px rgba(255, 45, 79, 0.85); }
+}
+
+/* Sub-760px: launcher group drops to its own row, stats wrap cleanly */
+@media (max-width: 760px) {
+  .dock { padding: 12px 18px; gap: 8px 18px; }
+  .dock__group { gap: 18px; }
+  .dock__stats { padding-left: 0; margin-left: 0; border-left: none; width: 100%; }
+  .dock__group--launchers { width: 100%; justify-content: flex-end; }
+}
+
+/* ================================================================
+   SYSTEM ALERT TOAST (proactive RAM/CPU notification)
+================================================================ */
+.sys-alert {
+  position: fixed;
+  right: 24px;
+  bottom: 90px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  max-width: 420px;
+  background: rgba(14, 8, 12, 0.92);
+  border: 1px solid var(--red);
+  border-radius: var(--r);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 40px rgba(255, 45, 79, 0.25), 0 0 0 1px rgba(255, 45, 79, 0.15) inset;
+  animation: sys-alert-in 0.32s ease both;
+  font-family: var(--f-body);
+}
+.sys-alert[hidden] { display: none; }
+.sys-alert__sigil {
+  display: grid; place-items: center;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 45, 79, 0.15);
+  color: var(--red);
+  font-size: 18px;
+  flex-shrink: 0;
+  animation: pulse-crit 1.6s ease-in-out infinite;
+}
+.sys-alert__body { flex: 1; min-width: 0; }
+.sys-alert__msg {
+  margin: 0 0 4px 0;
+  color: var(--paper);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.sys-alert__detail {
+  margin: 0;
+  color: var(--paper-mute);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.sys-alert__actions {
+  display: flex; gap: 8px;
+  flex-shrink: 0;
+}
+.primary-btn--sm,
+.ghost-btn--sm {
+  padding: 6px 14px;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+}
+@keyframes sys-alert-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@media (max-width: 520px) {
+  .sys-alert {
+    left: 12px; right: 12px;
+    max-width: none;
+    flex-wrap: wrap;
+    bottom: 78px;
+  }
+  .sys-alert__actions { width: 100%; justify-content: flex-end; }
 }
 
 /* ================================================================

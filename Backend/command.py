@@ -5,28 +5,51 @@ import sqlite3
 import os
 import webbrowser
 
+# pyttsx3 engine is cached at module level — initialising SAPI5 takes ~250ms
+# and adds noticeable lag on every reply. We init lazily on first speak().
+_tts_engine = None
+_tts_lock = threading.Lock()
+
+
+def _get_tts_engine():
+    global _tts_engine
+    if _tts_engine is not None:
+        return _tts_engine
+    import pyttsx3
+    engine = pyttsx3.init('sapi5')
+    voices = engine.getProperty('voices')
+    if voices:
+        # Prefer an Indian / Hindi voice if Windows has one installed —
+        # falls back to the default voice otherwise. Better fit for Hinglish.
+        chosen = voices[0].id
+        for v in voices:
+            name = (getattr(v, 'name', '') or '').lower()
+            langs = ' '.join(str(x) for x in (getattr(v, 'languages', []) or [])).lower()
+            if any(k in name for k in ('ravi', 'hindi', 'india', 'kalpana', 'hemant')) \
+               or 'hi-in' in langs or 'en-in' in langs:
+                chosen = v.id
+                break
+        engine.setProperty('voice', chosen)
+    engine.setProperty('rate', 174)
+    _tts_engine = engine
+    return engine
+
 
 def speak_text(text):
-    """Speak text using pyttsx3. Engine is created per-call and released so we
-    don't hold SAPI5 COM resources at idle."""
+    """Speak text using pyttsx3. Engine is module-cached so back-to-back
+    replies don't pay SAPI5 init cost every time."""
     if not text:
         return
-    try:
-        import pyttsx3
-        engine = pyttsx3.init('sapi5')
-        voices = engine.getProperty('voices')
-        if voices:
-            engine.setProperty('voice', voices[0].id)
-        engine.setProperty('rate', 174)
-        engine.say(text)
-        engine.runAndWait()
+    with _tts_lock:
         try:
-            engine.stop()
-            del engine
-        except Exception:
-            pass
-    except Exception as e:
-        print(f"TTS error: {e}")
+            engine = _get_tts_engine()
+            engine.say(text)
+            engine.runAndWait()
+        except Exception as e:
+            print(f"TTS error: {e}")
+            # Reset engine so the next call rebuilds it cleanly.
+            global _tts_engine
+            _tts_engine = None
 
 
 def execute_command(query):
@@ -50,6 +73,160 @@ def execute_command(query):
             PlayYoutube(query)
             command_handled = True
 
+        elif any(k in query_lower for k in ("weather", "mausam", "temperature")):
+            from Backend.weather import get_weather
+            summary = get_weather(query)
+            speak_text(summary)
+            try:
+                eel.showGeminiResponse(summary)()
+            except Exception:
+                pass
+            command_handled = True
+
+        elif any(k in query_lower for k in ("ram check", "ram kitna", "ram kitni", "memory kitni", "memory check")):
+            from Backend.system_control import get_stats, top_hogs
+            s = get_stats(); h = top_hogs(5)
+            if s.get('ok'):
+                msg = (f"Boss, RAM {s['ram']}% use ho rahi hai "
+                       f"({s['ram_used_gb']} GB / {s['ram_total_gb']} GB). CPU {s['cpu']}%.")
+                speak_text(msg)
+                detail = msg + "\n\nTop memory hogs:\n" + "\n".join(
+                    f"• {p['name']} — {p['rss_mb']} MB" for p in h
+                )
+                try: eel.showGeminiResponse(detail)()
+                except Exception: pass
+            else:
+                speak_text("Boss, system stats nahi mil paye.")
+            command_handled = True
+
+        elif any(k in query_lower for k in ("saaf kar", "clean cache", "cache saaf", "cleanup")):
+            from Backend.system_control import cleanup_caches
+            speak_text("Saaf kar raha hun boss, ek minute.")
+            r = cleanup_caches(confirm=True)
+            if r.get('ok'):
+                speak_text(f"Saaf ho gaya boss, {r.get('freed_mb', 0)} MB free kar diya.")
+            else:
+                speak_text("Cleanup me thodi dikkat aayi boss.")
+            command_handled = True
+
+        elif "screenshot" in query_lower:
+            from Backend.system_control import take_screenshot
+            r = take_screenshot()
+            if r.get('ok'):
+                speak_text(f"Screenshot le liya boss, {os.path.basename(r['path'])} me save ho gaya.")
+                try: eel.showGeminiResponse(f"Screenshot saved:\n{r['path']}")()
+                except Exception: pass
+            else:
+                speak_text("Screenshot fail ho gaya boss.")
+            command_handled = True
+
+        elif "volume" in query_lower:
+            import re
+            from Backend.system_control import set_volume, mute_volume, get_stats
+            if "mute" in query_lower:
+                mute_volume(); speak_text("Mute kar diya boss.")
+            elif "unmute" in query_lower:
+                mute_volume(False); speak_text("Unmute kar diya boss.")
+            elif "up" in query_lower or "badha" in query_lower:
+                cur = get_stats().get('volume', 50)
+                set_volume(min(100, cur + 10)); speak_text("Volume badha diya boss.")
+            elif "down" in query_lower or "kam" in query_lower:
+                cur = get_stats().get('volume', 50)
+                set_volume(max(0, cur - 10)); speak_text("Volume kam kar diya boss.")
+            else:
+                m = re.search(r'(\d+)', query_lower)
+                if m:
+                    set_volume(int(m.group(1)))
+                    speak_text(f"Volume {m.group(1)} pe set kar diya boss.")
+                else:
+                    speak_text("Volume kitna karu boss? Number bolo.")
+            command_handled = True
+
+        elif "brightness" in query_lower:
+            import re
+            from Backend.system_control import set_brightness
+            m = re.search(r'(\d+)', query_lower)
+            if m:
+                r = set_brightness(int(m.group(1)))
+                if r.get('ok'):
+                    speak_text(f"Brightness {m.group(1)} pe kar di boss.")
+                else:
+                    speak_text("Brightness change nahi ho payi boss.")
+            else:
+                speak_text("Brightness kitni karu boss? Number bolo.")
+            command_handled = True
+
+        elif "battery" in query_lower:
+            from Backend.system_control import get_stats
+            s = get_stats()
+            if s.get('battery') is not None:
+                plug = "charging pe hai" if s.get('plugged') else "battery pe chal raha hai"
+                speak_text(f"Boss, battery {s['battery']}% hai aur {plug}.")
+            else:
+                speak_text("Boss, ye desktop hai shayad — battery info nahi mili.")
+            command_handled = True
+
+        elif "lock" in query_lower and ("screen" in query_lower or "kar de" in query_lower or "kardo" in query_lower or "kar do" in query_lower):
+            from Backend.system_control import lock_screen
+            speak_text("Lock kar raha hun boss.")
+            time.sleep(0.5)
+            lock_screen()
+            command_handled = True
+
+        elif "download" in query_lower:
+            import re
+            from Backend.file_ops import download_file
+            m = re.search(r'(https?://\S+)', query)
+            if m:
+                speak_text("Download shuru kar raha hun boss.")
+                r = download_file(m.group(1))
+                if r.get('ok'):
+                    speak_text(f"Boss, {r.get('size_mb', 0)} MB ki file download ho gayi.")
+                    try: eel.showGeminiResponse(f"Saved to:\n{r['path']}")()
+                    except Exception: pass
+                else:
+                    speak_text(f"Download fail ho gaya boss — {r.get('error', 'unknown error')}.")
+            else:
+                speak_text("Boss, URL bolo download karne ke liye.")
+            command_handled = True
+
+        elif "notepad" in query_lower and ("likho" in query_lower or "write" in query_lower):
+            import re
+            from Backend.file_ops import write_file_to_app
+            m = re.search(r'(?:likho|write)\s+(.+)$', query, re.IGNORECASE)
+            if m:
+                content = m.group(1).strip()
+                speak_text("Notepad me likh raha hun boss.")
+                r = write_file_to_app(content, app='notepad')
+                if r.get('ok'):
+                    speak_text("Notepad me likh diya boss.")
+                else:
+                    speak_text("Notepad me likhne me dikkat aayi boss.")
+            else:
+                speak_text("Boss, kya likhna hai bolo.")
+            command_handled = True
+
+        elif query_lower.startswith("dhundo ") or query_lower.startswith("find "):
+            from Backend.file_ops import find_file
+            name = query_lower.replace("dhundo", "").replace("find", "").strip()
+            if name:
+                speak_text(f"Boss, {name} dhund raha hun.")
+                r = find_file(name)
+                if r.get('ok'):
+                    n = len(r.get('paths', []))
+                    speak_text(f"Boss, {n} file mil gayi." if n else "Boss, kuch nahi mila.")
+                    if n:
+                        try:
+                            eel.showGeminiResponse(
+                                f"Found {n} file(s):\n\n" + "\n".join(r['paths'][:20])
+                            )()
+                        except Exception: pass
+                else:
+                    speak_text("Search fail ho gaya boss.")
+            else:
+                speak_text("Boss, file ka naam bolo.")
+            command_handled = True
+
         if not command_handled:
             con = sqlite3.connect("HeyDude.db")
             cursor = con.cursor()
@@ -59,14 +236,14 @@ def execute_command(query):
 
             if sys_result:
                 os.startfile(sys_result[0])
-                speak_text(f"Opening {query}")
+                speak_text(f"Boss, {query} khol raha hun")
                 command_handled = True
             else:
                 cursor.execute("SELECT url FROM web_commands WHERE name LIKE ?", (f"%{query}%",))
                 web_result = cursor.fetchone()
                 if web_result:
                     webbrowser.open(web_result[0])
-                    speak_text(f"Opening {query}")
+                    speak_text(f"Boss, {query} khol raha hun")
                     command_handled = True
 
             con.close()
@@ -153,7 +330,7 @@ def allCommands(message=1):
             pass
 
     if not query:
-        speak_text("No command received")
+        speak_text("Boss, kuch suna nahi maine.")
         return
 
     try:
@@ -180,10 +357,14 @@ def start_listen():
             query = takecommand()
 
             if query:
-                if any(w in query.lower() for w in ("hey dude", "hai dude", "hey dud")):
+                wake_words = (
+                    "hey boss", "hai boss",
+                    "hey dude", "hai dude", "hey dud",
+                )
+                if any(w in query.lower() for w in wake_words):
                     print("✅ Hotword detected!")
                     try:
-                        eel.receiveRecognitionResult("Yes, listening...")()
+                        eel.receiveRecognitionResult("Ji boss, sun raha hun...")()
                     except Exception:
                         pass
 
@@ -199,9 +380,9 @@ def start_listen():
                     if actual_query:
                         query = actual_query
                     else:
-                        speak_text("How can I help?")
+                        speak_text("Bolo boss, kaise madad karun?")
                         try:
-                            eel.receiveRecognitionResult("How can I help?")()
+                            eel.receiveRecognitionResult("Bolo boss, kaise madad karun?")()
                             eel.closeSiriWave()()
                         except Exception:
                             pass
@@ -227,8 +408,8 @@ def start_listen():
                         pass
             else:
                 try:
-                    speak_text("Can you repeat?")
-                    eel.receiveRecognitionResult("Can you repeat?")()
+                    speak_text("Sorry boss, samjha nahi — phir se bolo?")
+                    eel.receiveRecognitionResult("Sorry boss, samjha nahi — phir se bolo?")()
                     eel.closeSiriWave()()
                 except Exception:
                     pass

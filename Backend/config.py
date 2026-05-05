@@ -5,6 +5,51 @@ import eel
 
 DB_PATH = "HeyDude.db"
 
+def _get_table_columns(cursor, table_name):
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    return {row[1] for row in cursor.fetchall()}
+
+
+def ensure_database_schema():
+    """Ensure all tables/columns used by the UI and command handlers exist."""
+    con = sqlite3.connect(DB_PATH)
+    cursor = con.cursor()
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS profile
+                     (id INTEGER PRIMARY KEY, name TEXT, mobile TEXT, email TEXT, city TEXT)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS sys_commands
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, path TEXT)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS web_commands
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, url TEXT)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS contacts
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT, mobile_no TEXT, address TEXT, email TEXT)''')
+
+    contact_columns = _get_table_columns(cursor, "contacts")
+    if "mobile" not in contact_columns:
+        cursor.execute("ALTER TABLE contacts ADD COLUMN mobile TEXT")
+    if "mobile_no" not in contact_columns:
+        cursor.execute("ALTER TABLE contacts ADD COLUMN mobile_no TEXT")
+    if "address" not in contact_columns:
+        cursor.execute("ALTER TABLE contacts ADD COLUMN address TEXT")
+    if "email" not in contact_columns:
+        cursor.execute("ALTER TABLE contacts ADD COLUMN email TEXT")
+
+    # Keep both phone columns in sync so old WhatsApp logic (mobile_no)
+    # and new settings UI (mobile) both work.
+    cursor.execute("""
+        UPDATE contacts
+        SET
+            mobile = COALESCE(NULLIF(TRIM(mobile), ''), NULLIF(TRIM(mobile_no), ''), ''),
+            mobile_no = COALESCE(NULLIF(TRIM(mobile_no), ''), NULLIF(TRIM(mobile), ''), '')
+        WHERE COALESCE(TRIM(mobile), '') = '' OR COALESCE(TRIM(mobile_no), '') = ''
+    """)
+
+    con.commit()
+    con.close()
+
+
+ensure_database_schema()
+
 # ===== PROFILE MANAGEMENT =====
 
 @eel.expose
@@ -177,14 +222,19 @@ def delete_web_command(cmd_id):
 def get_contacts():
     """Get all contacts"""
     try:
+        ensure_database_schema()
         con = sqlite3.connect(DB_PATH)
         cursor = con.cursor()
-        
-        # Create contacts table if doesn't exist
-        cursor.execute('''CREATE TABLE IF NOT EXISTS contacts 
-                         (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT, address TEXT)''')
-        
-        cursor.execute("SELECT id, name, mobile, address FROM contacts ORDER BY name")
+
+        cursor.execute("""
+            SELECT
+                id,
+                name,
+                COALESCE(NULLIF(TRIM(mobile), ''), NULLIF(TRIM(mobile_no), ''), '') AS mobile,
+                COALESCE(address, '') AS address
+            FROM contacts
+            ORDER BY name
+        """)
         results = cursor.fetchall()
         con.close()
         
@@ -205,15 +255,15 @@ def get_contacts():
 def add_contact(name, mobile, address=''):
     """Add a new contact"""
     try:
+        ensure_database_schema()
         con = sqlite3.connect(DB_PATH)
         cursor = con.cursor()
-        
-        # Create contacts table if doesn't exist
-        cursor.execute('''CREATE TABLE IF NOT EXISTS contacts 
-                         (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT, address TEXT)''')
-        
-        cursor.execute("INSERT INTO contacts (name, mobile, address) VALUES (?, ?, ?)", 
-                      (name, mobile, address))
+
+        clean_mobile = mobile.strip() if mobile else ''
+        cursor.execute(
+            "INSERT INTO contacts (name, mobile, mobile_no, address) VALUES (?, ?, ?, ?)",
+            (name, clean_mobile, clean_mobile, address),
+        )
         con.commit()
         con.close()
         return {'success': True}

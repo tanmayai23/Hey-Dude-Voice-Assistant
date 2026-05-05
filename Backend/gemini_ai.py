@@ -17,16 +17,21 @@ if not GEMINI_API_KEY:
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Friendly assistant personality — speaks like a buddy, not a corporate bot.
+# Hinglish "boss" persona — Iron Man's Jarvis, but in Hinglish.
 SYSTEM_INSTRUCTION = (
-    "You are Hey Dude, a friendly personal assistant for Mohit. "
-    "Talk like a casual, helpful friend — warm, concise, a bit witty. "
-    "Default to short answers (1–3 sentences). Only go long if the user "
-    "asks for detail or the topic clearly needs it. Use plain language, "
-    "skip hedging and corporate filler. If you don't know something, say "
-    "so honestly. Today's date and the user's location are real-world "
-    "facts you can mention naturally if relevant."
+    "Tu Tanmay (boss) ka personal assistant hai — Iron Man ke Jarvis jaisa, "
+    "lekin Hinglish me. Hamesha 'boss' kehke address kar. Reply Hinglish me — "
+    "Hindi Roman script + English mixed (jaise 'haan boss, woh kaam ho gaya', "
+    "'ji boss, sun raha hun', 'sorry boss, samjha nahi'). Tone friendly, witty, "
+    "thoda cocky — confident but warm. Default answers chhote rakh (2-3 lines max) "
+    "jab tak boss explicit detail na maange. Filler aur corporate bakwas avoid kar. "
+    "Agar kuch nahi pata to seedha bol de 'sorry boss, ye to mujhe nahi pata'. "
+    "Boss ki location aur date real facts hain — naturally mention kar sakta hai."
 )
+
+# Model fallback list — first one that initializes wins. Protects against
+# Google retiring a model name without warning.
+MODEL_CANDIDATES = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-pro']
 
 _model = None
 _chat = None
@@ -37,11 +42,21 @@ def _get_chat():
     assistant has memory of the current conversation."""
     global _model, _chat
     if _chat is None:
-        _model = genai.GenerativeModel(
-            'gemini-2.5-flash',
-            system_instruction=SYSTEM_INSTRUCTION,
-        )
-        _chat = _model.start_chat(history=[])
+        last_err = None
+        for model_name in MODEL_CANDIDATES:
+            try:
+                _model = genai.GenerativeModel(
+                    model_name,
+                    system_instruction=SYSTEM_INSTRUCTION,
+                )
+                _chat = _model.start_chat(history=[])
+                print(f"✅ Gemini ready ({model_name})")
+                break
+            except Exception as e:
+                last_err = e
+                continue
+        if _chat is None:
+            raise RuntimeError(f"No Gemini model available: {last_err}")
     return _chat
 
 
@@ -60,10 +75,10 @@ def ask_gemini(query):
         response = chat.send_message(query)
         if response and response.text:
             return response.text.strip()
-        return "I couldn't find an answer to that."
+        return "Sorry boss, jawab nahi mil paya."
     except Exception as e:
         print(f"❌ Gemini API Error: {e}")
-        return "I'm having trouble reaching the internet right now."
+        return "Boss, internet me dikkat hai abhi."
 
 
 def handle_gemini_query(query):
@@ -73,7 +88,7 @@ def handle_gemini_query(query):
     try:
         # Quick UI feedback so the user knows something's happening.
         try:
-            eel.receiveRecognitionResult("Thinking…")()
+            eel.receiveRecognitionResult("Soch raha hun…")()
         except Exception:
             pass
 
@@ -100,7 +115,7 @@ def handle_gemini_query(query):
         if len(answer) > 220:
             first_sentence = (answer.split('.')[0] + '.') if '.' in answer else answer[:200]
             speak_text(first_sentence)
-            speak_text("Check the screen for the full answer.")
+            speak_text("Boss, pura jawab screen pe dekh lo.")
         else:
             speak_text(answer)
 
@@ -110,7 +125,7 @@ def handle_gemini_query(query):
         print(f"❌ Error handling Gemini query: {e}")
         import traceback
         traceback.print_exc()
-        error_msg = "Sorry, something went wrong on my end."
+        error_msg = "Sorry boss, kuch gadbad ho gayi."
         speak_text(error_msg)
         try:
             eel.receiveRecognitionResult(error_msg)()
