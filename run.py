@@ -3,6 +3,9 @@
 By default this skips face authentication (SKIP_FACE_AUTH=true in .env)
 so OpenCV is never loaded — saves ~150 MB of RAM at startup. Set
 SKIP_FACE_AUTH=false in .env to enable webcam-based login."""
+import gevent.monkey
+gevent.monkey.patch_all()
+
 import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)

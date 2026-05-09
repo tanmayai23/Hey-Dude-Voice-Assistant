@@ -10,6 +10,16 @@ import webbrowser
 _tts_engine = None
 _tts_lock = threading.Lock()
 
+# TTS_PROVIDER=kokoro (default) routes through cloud Kokoro-82M and falls
+# back to pyttsx3 on any failure. Set TTS_PROVIDER=pyttsx3 to force the
+# local SAPI5 voice (e.g. when offline or the API key isn't set).
+_TTS_PROVIDER = os.getenv('TTS_PROVIDER', 'kokoro').strip().lower() or 'kokoro'
+
+# ASR_PROVIDER=groq (default) routes mic audio through Groq's Whisper
+# (free tier covers ~8hrs/day). Falls back to recognize_google on failure
+# so offline use or missing keys still work.
+_ASR_PROVIDER = os.getenv('ASR_PROVIDER', 'groq').strip().lower() or 'groq'
+
 
 def _get_tts_engine():
     global _tts_engine
@@ -35,21 +45,51 @@ def _get_tts_engine():
     return engine
 
 
+def _speak_pyttsx3(text):
+    global _tts_engine
+    try:
+        engine = _get_tts_engine()
+        engine.say(text)
+        engine.runAndWait()
+    except Exception as e:
+        print(f"TTS error (pyttsx3): {e}")
+        # Reset engine so the next call rebuilds it cleanly.
+        _tts_engine = None
+
+
+def _speak_kokoro(text) -> bool:
+    """Synthesize via DeepInfra Kokoro and play the WAV. Returns True on
+    success, False if the caller should fall back to pyttsx3."""
+    try:
+        from Backend import tts_kokoro
+    except Exception as e:
+        print(f"Kokoro import failed: {e}")
+        return False
+    if not tts_kokoro.is_configured():
+        return False
+    try:
+        wav_path = tts_kokoro.synthesize_to_file(text)
+    except Exception as e:
+        print(f"Kokoro synth failed, falling back to pyttsx3: {e}")
+        return False
+    try:
+        from playsound import playsound
+        playsound(wav_path, block=True)
+        return True
+    except Exception as e:
+        print(f"Kokoro playback failed, falling back to pyttsx3: {e}")
+        return False
+
+
 def speak_text(text):
-    """Speak text using pyttsx3. Engine is module-cached so back-to-back
-    replies don't pay SAPI5 init cost every time."""
+    """Speak text. Tries cloud Kokoro first (warm voice), falls back to
+    pyttsx3 (Windows SAPI5) on any failure — so offline mode still works."""
     if not text:
         return
     with _tts_lock:
-        try:
-            engine = _get_tts_engine()
-            engine.say(text)
-            engine.runAndWait()
-        except Exception as e:
-            print(f"TTS error: {e}")
-            # Reset engine so the next call rebuilds it cleanly.
-            global _tts_engine
-            _tts_engine = None
+        if _TTS_PROVIDER == 'kokoro' and _speak_kokoro(text):
+            return
+        _speak_pyttsx3(text)
 
 
 def execute_command(query):
@@ -298,8 +338,19 @@ def takecommand():
         print(f"❌ Microphone error: {e}")
         return None
 
+    print("🔄 Recognizing...")
+
+    if _ASR_PROVIDER == 'groq':
+        try:
+            from Backend import asr_groq
+            if asr_groq.is_configured():
+                query = asr_groq.transcribe(audio)
+                print(f"👤 You said (Groq): {query}")
+                return query.lower()
+        except Exception as e:
+            print(f"⚠️  Groq ASR failed, falling back to Google: {e}")
+
     try:
-        print("🔄 Recognizing...")
         query = r.recognize_google(audio, language='en-in')
         print(f"👤 You said: {query}")
         return query.lower()

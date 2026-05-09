@@ -176,3 +176,6 @@ node_modules/
 # Test files (optional - remove if you want to include them)
 test_*.py
 Backend/test_db_integration.py
+
+# Cached Kokoro TTS clips (regenerated on demand)
+Backend/tts_cache/

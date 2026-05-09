@@ -117,7 +117,20 @@ function canvasApp() {
 		turnSpeed = 2 * Math.PI / 1200; //the sphere will rotate at this speed (one complete rotation every 1600 frames).
 		turnAngle = 0; //initial angle
 
-		timer = setInterval(onTimer, 10 / 24);
+		// Was `10 / 24` (~0.4ms) which browsers clamped to ~4ms = ~240 FPS — the
+		// missing two zeros burned ~50% CPU at idle. Restored to the intended 24 FPS.
+		var FRAME_MS = 1000 / 24;
+		timer = setInterval(onTimer, FRAME_MS);
+
+		// Pause the canvas while the tab is hidden — no point burning CPU on
+		// particles nobody is looking at.
+		document.addEventListener("visibilitychange", function () {
+			if (document.hidden) {
+				if (timer !== null) { clearInterval(timer); timer = null; }
+			} else if (timer === null) {
+				timer = setInterval(onTimer, FRAME_MS);
+			}
+		});
 	}
 
 	function onTimer() {
