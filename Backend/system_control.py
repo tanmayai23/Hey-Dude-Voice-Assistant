@@ -225,6 +225,10 @@ def _audio_endpoint():
     from comtypes import CLSCTX_ALL
     from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
     devices = AudioUtilities.GetSpeakers()
+    # pycaw >= 20240316 wraps the device in AudioDevice, which exposes the
+    # endpoint directly and no longer has .Activate().
+    if hasattr(devices, "EndpointVolume"):
+        return devices.EndpointVolume
     interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
     return cast(interface, POINTER(IAudioEndpointVolume))
 

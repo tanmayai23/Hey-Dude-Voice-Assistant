@@ -1,0 +1,12 @@
+ℹ️  Face authentication skipped (SKIP_FACE_AUTH=true).
+ℹ️  Hotword detection OFF (set ENABLE_HOTWORD=true in .env to enable). UI me mic dabake bhi baat ho sakti hai.
+📊 System monitor ON — RAM/CPU/Battery watch active.
+==================================================
+🎙️  Hey Dude Voice Assistant Started — http://localhost:8006
+==================================================
+Text command: hello.
+ℹ️  No command matched - Using Gemini AI for general query
+❌ Error executing command: Already exposed function with name "reset_chat"
+Text command: what is your name?
+ℹ️  No command matched - Using Gemini AI for general query
+❌ Error executing command: Already exposed function with name "reset_chat"

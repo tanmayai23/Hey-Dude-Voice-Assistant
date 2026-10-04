@@ -1,0 +1,7 @@
+# Vercel hosts only the static UI. The Python backend (Eel) is a desktop app
+# that needs the local mic/speakers/OS, so it can't run as a serverless
+# function. Hiding the .py files and requirements.txt stops Vercel from
+# auto-detecting a Python project.
+/*
+!/Frontend
+!/vercel.json
